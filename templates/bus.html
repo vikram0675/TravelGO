@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Search Buses - TravelGo</title>
+    <style>
+.seat-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0,0,0,0.6);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+}
+
+.seat-content {
+    background-color: white;
+    padding: 20px 30px;
+    border-radius: 12px;
+    width: 90%;
+    max-width: 500px;
+    box-shadow: 0 12px 24px rgba(0,0,0,0.2);
+    text-align: center;
+}
+
+.seat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+.seat { width: 40px; height: 40px; border-radius: 4px; line-height: 40px; text-align: center; cursor: pointer; background: #ccc; }
+.seat.selected { background: #004aad; color: white; }
+.seat.booked { background: #888; cursor: not-allowed; }
+.seat-actions { display:flex; justify-content:center; gap: 10px; margin-top: 10px; }
+
+        body {
+    margin: 0;
+    padding: 0;
+    font-family: 'Segoe UI', sans-serif;
+    background: linear-gradient(to right, #6a11cb, #2575fc);
+    color: #333;
+}
+
+header {
+    background-color: white;
+    padding: 15px 30px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+header h1 {
+    margin: 0;
+    font-size: 26px;
+    color: #004aad;
+}
+
+header nav a {
+    margin-left: 20px;
+    text-decoration: none;
+    color: #004aad;
+    font-weight: 600;
+}
+
+.container {
+    max-width: 950px;
+    margin: 50px auto;
+    background: white;
+    padding: 30px;
+    border-radius: 16px;
+    box-shadow: 0 12px 24px rgba(0,0,0,0.1);
+}
+
+h2 {
+    color: #1769ff;
+    font-size: 24px;
+    text-align: center;
+    margin-bottom: 30px;
+    font-weight: 700;
+}
+
+h2::before {
+    content: "🚌 ";
+}
+
+.form-row {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.form-row select,
+.form-row input {
+    padding: 10px;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+    min-width: 150px;
+}
+
+.search-btn {
+    background-color: #00b74a;
+    border: none;
+    color: white;
+    padding: 10px 20px;
+    font-weight: bold;
+    font-size: 16px;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.search-btn:hover {
+    background-color: #009e3c;
+}
+
+.filters {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    margin: 20px 0;
+    flex-wrap: wrap;
+}
+
+.filters label {
+    background: #f0f0f0;
+    padding: 8px 14px;
+    border-radius: 20px;
+    font-weight: 500;
+}
+
+.sort-row {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 20px;
+    gap: 10px;
+}
+
+.sort-row select {
+    padding: 8px 14px;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+}
+
+.bus-list {
+    margin-top: 30px;
+}
+
+.bus-card {
+    background: #f7f9ff;
+    border-left: 6px solid #004aad;
+    padding: 20px;
+    margin-bottom: 15px;
+    border-radius: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+}
+
+.book-btn {
+    background-color: #004aad;
+    color: white;
+    padding: 10px 16px;
+    border: none;
+    border-radius: 8px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.book-btn:hover {
+    background-color: #003080;
+}
+
+p {
+    text-align: center;
+    font-style: italic;
+    color: #555;
+}
+
+    </style>
+</head>
+<body>
+<header>
+    <h1>TravelGo</h1>
+    <nav>
+        <a href="/">Home</a>
+        <a href="/dashboard">Dashboard</a>
+        <a href="/logout">Logout</a>
+    </nav>
+</header>
+
+<div class="container">
+    <h2>🚌 Search & Book Buses</h2>
+
+    <div class="form-row">
+        <select id="source">
+            <option value="">From</option>
+            <option value="Hyderabad">Hyderabad</option>
+            <option value="Vijayawada">Vijayawada</option>
+            <option value="Guntur">Guntur</option>
+            <option value="Bengaluru">Bengaluru</option>
+            <option value="Chennai">Chennai</option>
+        </select>
+
+        <select id="destination">
+            <option value="">To</option>
+            <option value="Hyderabad">Hyderabad</option>
+            <option value="Vijayawada">Vijayawada</option>
+            <option value="Guntur">Guntur</option>
+            <option value="Bengaluru">Bengaluru</option>
+            <option value="Chennai">Chennai</option>
+        </select>
+
+        <input type="date" id="date" />
+        <input type="number" id="numPersons" min="1" value="1" placeholder="No. of Persons" />
+        <button id="search-btn" class="search-btn">Search</button>
+    </div>
+
+    <div class="filters">
+        <label><input type="checkbox" id="AC" /> AC</label>
+        <label><input type="checkbox" id="Non-AC" /> Non-AC</label>
+        <label><input type="checkbox" id="Sleeper" /> Sleeper</label>
+        <label><input type="checkbox" id="Semi-Sleeper" /> Semi-Sleeper</label>
+        <label><input type="checkbox" id="Seater" /> Seater</label>
+    </div>
+
+    <div class="sort-row">
+        <label for="sort">Sort by Price:</label>
+        <select id="sort" onchange="filterBuses()">
+            <option value="">None</option>
+            <option value="low">Low to High</option>
+            <option value="high">High to Low</option>
+        </select>
+    </div>
+
+    <div id="bus-list" class="bus-list"></div>
+</div>
+
+<!-- Seat Selection Modal (Correctly outside script block) -->
+<div id="seatModal" class="seat-modal" style="display: none;">
+  <div class="seat-content">
+    <h3>Select Your Seats</h3>
+    <div id="seatGrid" class="seat-grid"></div>
+    <div class="seat-actions">
+      <button class="book-btn" onclick="confirmSeats()">Confirm</button>
+      <button class="book-btn cancel" onclick="closeSeatModal()">Cancel</button>
+    </div>
+  </div>
+</div>
+<script>
+    // --- IMPORTANT: This is the const buses array for client-side search ---
+    const buses = [
+        { name: "Orange Travels", source: "Hyderabad", destination: "Vijayawada", time: "08:00 AM", type: "AC Sleeper", price: 800, _id: "bus_001" },
+        { name: "Kaveri Travels", source: "Hyderabad", destination: "Guntur", time: "09:30 AM", type: "Non-AC Semi-Sleeper", price: 550, _id: "bus_002" },
+        { name: "VRL Travels", source: "Vijayawada", destination: "Hyderabad", time: "07:00 PM", type: "AC Seater", price: 650, _id: "bus_003" },
+        { name: "SRS Travels", source: "Bengaluru", destination: "Chennai", time: "10:00 AM", type: "Non-AC Sleeper", price: 700, _id: "bus_004" },
+        { name: "Morning Star", source: "Chennai", destination: "Bengaluru", time: "06:00 PM", type: "AC Semi-Sleeper", price: 900, _id: "bus_005" },
+        { name: "Garuda Express", source: "Hyderabad", destination: "Vijayawada", time: "11:00 AM", type: "Non-AC Seater", price: 400, _id: "bus_006" },
+        { name: "Jabbar Travels", source: "Guntur", destination: "Hyderabad", time: "05:00 AM", type: "AC Seater", price: 600, _id: "bus_007" },
+        { name: "Greenline Travels", source: "Hyderabad", destination: "Vijayawada", time: "09:00 PM", type: "AC Sleeper", price: 850, _id: "bus_008"},
+        { name: "Kesineni Travels", source: "Vijayawada", destination: "Hyderabad", time: "06:00 AM", type: "Non-AC Seater", price: 500, _id: "bus_009"},
+    ];
+
+    function filterBuses() {
+        const source = document.getElementById("source").value;
+        const destination = document.getElementById("destination").value;
+        const date = document.getElementById("date").value; // Date is used for validation/display, not filtering client-side
+        const numPersons = parseInt(document.getElementById("numPersons").value);
+        const sort = document.getElementById("sort").value;
+        const list = document.getElementById("bus-list");
+        list.innerHTML = ""; // Clear previous results
+
+        if (!source || !destination || !date || numPersons < 1) {
+            list.innerHTML = "<p>Please select **Source**, **Destination**, **Date**, and **Number of Persons** to search.</p>";
+            return;
+        }
+
+        if (source === destination) {
+            alert("Source and destination cannot be the same.");
+            return;
+        }
+
+        const filters = {
+            AC: document.getElementById("AC").checked,
+            "Non-AC": document.getElementById("Non-AC").checked,
+            Sleeper: document.getElementById("Sleeper").checked,
+            "Semi-Sleeper": document.getElementById("Semi-Sleeper").checked,
+            Seater: document.getElementById("Seater").checked,
+        };
+
+        // Filter the client-side 'buses' array
+        let filtered = buses.filter(b => {
+            const matchesRoute = b.source === source && b.destination === destination;
+            
+            // Check if no filters are selected, or if the bus type matches any selected filter
+            const noFiltersSelected = Object.values(filters).every(v => !v);
+            const matchesTypeFilter = (filters.AC && b.type.includes("AC")) ||
+                                      (filters["Non-AC"] && b.type.includes("Non-AC")) ||
+                                      (filters.Sleeper && b.type.includes("Sleeper")) ||
+                                      (filters["Semi-Sleeper"] && b.type.includes("Semi-Sleeper")) ||
+                                      (filters.Seater && b.type.includes("Seater"));
+
+            return matchesRoute && (noFiltersSelected || matchesTypeFilter);
+        });
+
+        if (sort === "low") {
+            filtered.sort((a, b) => a.price - b.price);
+        } else if (sort === "high") {
+            filtered.sort((a, b) => b.price - a.price);
+        }
+
+        if (filtered.length === 0) {
+            list.innerHTML = "<p>No buses found for this route and filters.</p>";
+            return;
+        }
+
+        filtered.forEach(bus => {
+            const card = document.createElement("div");
+            card.className = "bus-card";
+            card.innerHTML = `
+                <div>
+                    <strong>${bus.name}</strong><br>
+                    ${bus.type} • ${bus.time} • ₹${bus.price}/person
+                </div>
+                <br>
+                <button class="book-btn" onclick="openSeatModal(
+                   '${bus._id}', 
+                   ${bus.price}, 
+                   ${numPersons}, 
+                 '${bus.name}', 
+                  '${bus.source}', 
+                  '${bus.destination}', 
+                 '${bus.time}', 
+                  '${bus.type}', 
+                  '${date}'
+                   )">
+                  Book
+                </button>
+
+            `;
+            list.appendChild(card);
+        });
+    }
+
+    // Function to handle bus booking confirmation (redirects to server-side confirmation page)
+    function confirmBusBooking(name, source, destination, time, type, price, date, persons, busId) {
+        // Construct the URL with all necessary parameters for the confirmation page
+        const url = `/confirm_bus_details?name=${encodeURIComponent(name)}&source=${encodeURIComponent(source)}&destination=${encodeURIComponent(destination)}&time=${encodeURIComponent(time)}&type=${encodeURIComponent(type)}&price=${price}&date=${encodeURIComponent(date)}&persons=${persons}&busId=${encodeURIComponent(busId)}`;
+        window.location.href = url;
+    }
+
+    // Event listeners for search and filter changes
+    document.getElementById("search-btn").addEventListener("click", filterBuses);
+    document.getElementById("AC").addEventListener("change", filterBuses);
+    document.getElementById("Non-AC").addEventListener("change", filterBuses);
+    document.getElementById("Sleeper").addEventListener("change", filterBuses);
+    document.getElementById("Semi-Sleeper").addEventListener("change", filterBuses);
+    document.getElementById("Seater").addEventListener("change", filterBuses);
+
+    // Set today's date as default
+    document.addEventListener('DOMContentLoaded', () => {
+        const today = new Date().toISOString().split('T')[0];
+        document.getElementById('date').value = today;
+        // Optionally, call filterBuses on page load to show initial results
+        // filterBuses(); 
+    });
+    let selectedBus = null, selectedSeats = [];
+
+function openSeatModal(busId, price, persons, name, source, destination, time, type, date) {
+  selectedBus = { busId, price, persons, name, source, destination, time, type, date };
+
+  selectedSeats = [];
+  const grid = document.getElementById("seatGrid");
+  grid.innerHTML = "";
+  fetch(`/booked_seats?bus_id=${busId}&date=${encodeURIComponent(document.getElementById('date').value)}`)
+    .then(res => res.json())
+    .then(booked => {
+      for (let i=1; i<=52; i++) {
+        const seat = document.createElement("div");
+        seat.classList.add("seat");
+        seat.textContent = i;
+        if (booked.includes(String(i))) seat.classList.add("booked");
+        else seat.addEventListener("click", () => toggleSeat(seat, i));
+        grid.appendChild(seat);
+      }
+      document.getElementById("seatModal").style.display = "flex";
+    });
+}
+
+function toggleSeat(div,i) {
+  if(div.classList.contains('booked')) return;
+  if(div.classList.contains('selected')) {
+    div.classList.remove('selected');
+    selectedSeats = selectedSeats.filter(s=>s!==i);
+  } else if(selectedSeats.length < selectedBus.persons) {
+    div.classList.add('selected');
+    selectedSeats.push(i);
+  } else alert(`Select only ${selectedBus.persons} seats`);
+}
+
+function closeSeatModal(){ document.getElementById("seatModal").style.display = "none"; }
+
+function confirmSeats(){
+  if (selectedSeats.length !== selectedBus.persons) 
+    return alert(`Select ${selectedBus.persons} seats`);
+
+  const params = new URLSearchParams({
+    name: selectedBus.name,
+    source: selectedBus.source,
+    destination: selectedBus.destination,
+    time: selectedBus.time,
+    type: selectedBus.type,
+    price: selectedBus.price,
+    date: selectedBus.date,
+    persons: selectedBus.persons,
+    busId: selectedBus.busId,
+  });
+
+  // Append each seat separately as seats[]
+  selectedSeats.forEach(seat => {
+    params.append('seats[]', seat);
+  });
+
+  // Now redirect
+  window.location = `/confirm_bus_details?${params.toString()}`;
+}
+
+
+</script>
+
+</body>
+</html>

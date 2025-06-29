@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+
+<html lang="en">
+
+<head>
+
+    <meta charset="UTF-8">
+
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Search Flights - TravelGo</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    <style>
+      .seat {
+  width: 40px;
+  height: 40px;
+  border-radius: 6px;
+  text-align: center;
+  line-height: 40px;
+  font-weight: bold;
+  background-color: #d1eaff;
+  cursor: pointer;
+  border: 1px solid #aaa;
+}
+
+.seat.selected {
+  background-color: #28a745;
+  color: white;
+}
+
+.seat.booked {
+  background-color: #ccc;
+  cursor: not-allowed;
+}
+
+       body {
+    margin: 0;
+    padding: 0;
+    font-family: 'Segoe UI', sans-serif;
+    background: linear-gradient(to right, #6a11cb, #2575fc);
+    color: #333;
+}
+
+header {
+    background-color: white;
+    padding: 15px 30px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+header h1 {
+    margin: 0;
+    font-size: 26px;
+    color: #004aad;
+}
+
+header a {
+    margin-left: 20px;
+    text-decoration: none;
+    color: #004aad;
+    font-weight: 600;
+}
+
+main.container {
+    max-width: 900px;
+    margin: 50px auto;
+    background: white;
+    padding: 30px;
+    border-radius: 16px;
+    box-shadow: 0 12px 24px rgba(0,0,0,0.1);
+}
+
+h2 {
+    color: #1769ff;
+    font-size: 24px;
+    text-align: center;
+    margin-bottom: 30px;
+    font-weight: 700;
+}
+
+h2::before {
+    content: "✈ ";
+}
+
+.form-inline {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 10px;
+}
+
+.form-inline .form-control {
+    min-width: 150px;
+    border-radius: 8px;
+    padding: 8px;
+    border: 1px solid #ccc;
+}
+
+.btn-primary {
+    background-color: #00b74a;
+    border: none;
+    padding: 10px 20px;
+    font-weight: bold;
+    font-size: 16px;
+    border-radius: 8px;
+    transition: background-color 0.3s ease;
+}
+
+.btn-primary:hover {
+    background-color: #009e3c;
+}
+
+#flight-list {
+    margin-top: 30px;
+}
+
+.flight-card {
+    background: #f7f9ff;
+    border-left: 6px solid #004aad;
+    padding: 20px;
+    margin-bottom: 15px;
+    border-radius: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+}
+
+.book-btn {
+    background-color: #004aad;
+    color: white;
+    padding: 10px 16px;
+    border: none;
+    border-radius: 8px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.book-btn:hover {
+    background-color: #003080;
+}
+       /* Customer Service Floating Button */
+.support-btn {
+  position: fixed;
+  top: 80px;
+  right: 20px;
+  background-color: #004aad;
+  color: white;
+  border: none;
+  border-radius: 50px;
+  padding: 15px 20px;
+  cursor: pointer;
+  font-size: 16px;
+  z-index: 1000;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+}
+
+/* Popup Box */
+.support-popup {
+  display: none;
+  position: fixed;
+  top : 140px;
+  right: 20px;
+  background-color: white;
+  border: 1px solid #ccc;
+  border-radius: 10px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+  width: 250px;
+  z-index: 1001;
+}
+
+.support-popup ul {
+  list-style: none;
+  margin: 0;
+  padding: 10px;
+}
+
+.support-popup li {
+  padding: 10px;
+  border-bottom: 1px solid #eee;
+  cursor: pointer;
+}
+
+.support-popup li:hover {
+  background-color: #f3f3f3;
+}
+
+.support-popup h4 {
+  margin: 0;
+  padding: 10px;
+  background-color: #004aad;
+  color: white;
+  border-radius: 10px 10px 0 0;
+}
+
+
+    </style>
+</head>
+
+<!-- Floating Customer Support Button -->
+<button class="support-btn" onclick="toggleSupportPopup()"><img src="https://png.pngtree.com/png-vector/20240612/ourmid/pngtree-smiling-emoji-icon-with-headphones-png-image_12719375.png" style="width: 50px; height: 50px; vertical-align: middle; margin-right: 8px;"> Customer Service</button>
+
+<!-- Popup Box -->
+<div class="support-popup" id="supportPopup">
+  <h4>Need Help?</h4>
+  <ul>
+    <li onclick="alert('Email us at vikrAm@travelgo.com')">📧 Email Support</li>
+    <li onclick="alert('Call us at +91 93909 26424')">📞 Call Us</li>
+    <li><a href="/faqs" style="text-decoration: none">❓FAQs </a></li>
+    
+  </ul>
+</div>
+
+<!-- Script to toggle popup -->
+<script>
+  function toggleSupportPopup() {
+    var popup = document.getElementById("supportPopup");
+    popup.style.display = (popup.style.display === "block") ? "none" : "block";
+  }
+
+  document.addEventListener("click", function(event) {
+    var popup = document.getElementById("supportPopup");
+    var button = document.querySelector(".support-btn");
+    if (!popup.contains(event.target) && !button.contains(event.target)) {
+      popup.style.display = "none";
+    }
+  });
+</script>
+<header>
+
+    <h1>TravelGo</h1>
+     <a href="/">Home</a>
+    <a href="/dashboard">Dashboard</a>
+    <a href="/logout">Logout</a>
+
+</header>
+
+<main class="container">
+
+    <h2>✈ Search & Book Flights</h2>
+
+    <form id="searchForm" class="form-inline mb-3">
+        
+
+        <select id="source" class="form-control mr-2">
+
+            <option value="">From</option>
+
+            <option value="Hyderabad">Hyderabad</option>
+
+            <option value="Bengaluru">Bengaluru</option>
+
+            <option value="Chennai">Chennai</option>
+
+            <option value="Mumbai">Mumbai</option>
+
+            <option value="Delhi">Delhi</option>
+
+        </select>
+
+        <select id="destination" class="form-control mr-2">
+
+            <option value="">To</option>
+
+            <option value="Hyderabad">Hyderabad</option>
+
+            <option value="Bengaluru">Bengaluru</option>
+
+            <option value="Chennai">Chennai</option>
+
+            <option value="Mumbai">Mumbai</option>
+
+            <option value="Delhi">Delhi</option>
+
+        </select>
+
+        <input type="date" id="date" class="form-control mr-2" />
+
+        <input type="number" id="numPersons" class="form-control mr-2" min="1" value="1" placeholder="Passengers" />
+
+         <select id="flightClass" class="form-control mr-2">
+            <option value="">Class</option>
+            <option value="economy">Economy</option>
+            <option value="premium">Premium Economy</option>
+            <option value="business">Business</option>
+            <option value="first">First Class</option>
+        </select>
+
+
+        <button type="button" id="search-btn" class="btn btn-primary">Search</button>
+
+    </form>
+
+    <div id="flight-list"></div>
+
+</main>
+
+<script>
+
+    const flights = [
+  {
+    id: 'FLT001',
+    airline: 'IndiGo',
+    number: '6E-234',
+    source: 'Hyderabad',
+    dest: 'Mumbai',
+    depart: '08:00',
+    arrive: '09:30',
+    prices: {
+      economy: 3500,
+      premium: 5000,
+      business: 7000,
+      first: 9500
+    }
+  },
+  {
+    id: 'FLT002',
+    airline: 'Vistara',
+    number: 'UK-876',
+    source: 'Bengaluru',
+    dest: 'Delhi',
+    depart: '12:00',
+    arrive: '14:45',
+    prices: {
+      economy: 4500,
+      premium: 6200,
+      business: 8000,
+      first: 10500
+    }
+  },
+  {
+    id: 'FLT003',
+    airline: 'Air India',
+    number: 'AI-543',
+    source: 'Chennai',
+    dest: 'Hyderabad',
+    depart: '06:00',
+    arrive: '07:20',
+    prices: {
+      economy: 2800,
+      premium: 4200,
+      business: 6000,
+      first: 8000
+    }
+  },
+  {
+    id: 'FLT004',
+    airline: 'SpiceJet',
+    number: 'SG-123',
+    source: 'Mumbai',
+    dest: 'Bengaluru',
+    depart: '18:00',
+    arrive: '19:30',
+    prices: {
+      economy: 3200,
+      premium: 4800,
+      business: 7000,
+      first: 9000
+    }
+  }
+];
+
+
+    function filterFlights() {
+  const src = document.getElementById('source').value;
+  const dst = document.getElementById('destination').value;
+  const date = document.getElementById('date').value;
+  const pax = parseInt(document.getElementById('numPersons').value);
+  const classType = document.getElementById('flightClass').value;
+  const list = document.getElementById('flight-list');
+  list.innerHTML = '';
+
+  if (!src || !dst || !date || pax < 1 || !classType) return;
+
+  const filtered = flights.filter(f => f.source === src && f.dest === dst);
+
+  filtered.forEach(f => {
+    const price = f.prices[classType];
+    const classLabel = classType.charAt(0).toUpperCase() + classType.slice(1).replace("premium", "Premium ").replace("first", "First Class");
+
+    const card = document.createElement('div');
+    card.className = 'flight-card';
+    card.innerHTML = `
+      <div>
+        <strong>${f.airline} ${f.number}</strong><br>
+        ${f.source} → ${f.dest}<br>
+        ${date} ${f.depart} - ${f.arrive}<br>
+        Class: <strong>${classLabel}</strong>
+      </div>
+      <div>
+        ₹${price} x ${pax} = ₹${price * pax}
+      </div>
+      <button class="book-btn" onclick="confirmFlight('${f.id}','${f.airline}','${f.number}','${f.source}','${f.dest}','${f.depart}','${f.arrive}','${date}',${pax},${price},'${classLabel}')">Book</button>
+    `;
+    list.appendChild(card);
+  });
+}
+
+
+function confirmFlight(id, airline, number, src, dst, depart, arrive, date, pax, price, classType) {
+  const url = `/flight_seat_selection?flight_id=${id}&airline=${airline}&flight_number=${number}&source=${src}&destination=${dst}&departure=${depart}&arrival=${arrive}&date=${date}&passengers=${pax}&price=${price}&class=${classType}`;
+  window.location.href = url;
+}
+
+
+    document.getElementById('search-btn').addEventListener('click',filterFlights);
+
+</script>
+<!-- Seat Selection Modal -->
+<div class="modal fade" id="seatModal" tabindex="-1" role="dialog" aria-labelledby="seatModalLabel" aria-hidden="true">
+  <div class="modal-dialog modal-lg" role="document">
+    <div class="modal-content">
+      <div class="modal-header bg-primary text-white">
+        <h5 class="modal-title" id="seatModalLabel">Select Your Seat(s)</h5>
+        <button type="button" class="close text-white" data-dismiss="modal">&times;</button>
+      </div>
+      <div class="modal-body" id="seatContainer" style="display: flex; flex-wrap: wrap; gap: 10px;"></div>
+      <div class="modal-footer">
+        <button id="confirmSeatsBtn" class="btn btn-success">Confirm Selection</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+</body>
+
+</html>

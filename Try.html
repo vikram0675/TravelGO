@@ -1,0 +1,63 @@
+confirmBusBooking(
+                    '${bus.name}', 
+                    '${bus.source}', 
+                    '${bus.destination}', 
+                    '${bus.time}', 
+                    '${bus.type}', 
+                    ${bus.price}, 
+                    '${date}', 
+                    ${numPersons},
+                    '${bus._id}' // Pass the client-side _id for the server to recognize
+                )
+
+@app.route('/confirm_bus_details')
+def confirm_bus_details():
+    # Get values from query string
+    seats = request.args.get('seats')  # e.g., "2,3,4"
+    selected_seats = seats.split(',') if seats else []
+
+    # Store booking details in session or context
+    booking = {
+        'name': request.args.get('name'),
+        'source': request.args.get('source'),
+        'destination': request.args.get('destination'),
+        'travel_date': request.args.get('date'),
+        'time': request.args.get('time'),
+        'type': request.args.get('type'),
+        'price': float(request.args.get('price')),
+        'num_persons': int(request.args.get('persons')),
+        'selected_seats': selected_seats,
+        'total_price': float(request.args.get('price')) * int(request.args.get('persons'))
+    }
+
+    session['booking'] = booking  # Save in session for use in POST confirmation
+
+    return render_template('confirm_bus_booking.html', booking=booking)
+
+
+
+    let selectedFlightData = null;
+let selectedSeats = [];
+
+function confirmFlight(id, airline, number, src, dst, depart, arrive, date, pax, price, classType) {
+  selectedFlightData = {
+    flight_id: id,
+    airline,
+    flight_number: number,
+    source: src,
+    destination: dst,
+    departure: depart,
+    arrival: arrive,
+    travel_date: date,
+    num_persons: pax,
+    price_per_person: price,
+    total_price: price * pax,
+    flight_class: classType
+  };
+
+  // Simulated booked seats (replace with real-time data later)
+  const booked = ['2A', '2B', '3A'];
+
+  showSeatSelection(pax, booked);
+  $('#seatModal').modal('show');
+}

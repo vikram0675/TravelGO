@@ -1,0 +1,174 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Confirm Hotel Booking - TravelGo</title>
+    <style>
+        header {
+            background-color: #004aad;
+            color: white;
+            padding: 20px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        header h1 {
+            font-size: 26px;
+            margin: 0;
+        }
+
+        header nav a {
+            color: white;
+            text-decoration: none;
+            margin-left: 20px;
+            font-weight: 500;
+            transition: color 0.3s;
+        }
+
+        header nav a:hover {
+            color: #ffdd57;
+        }
+        body {
+    background-color: #f1f8ff;
+    font-family: 'Segoe UI', sans-serif;
+    margin: 0;
+    padding: 0;
+}
+
+.container {
+    max-width: 700px;
+    margin: 60px auto;
+    background: white;
+    padding: 30px 40px;
+    border-radius: 18px;
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.1);
+}
+
+h2 {
+    text-align: center;
+    color: #004aad;
+    margin-bottom: 30px;
+    font-size: 24px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+h2::before {
+    content: "🏨 ";
+    margin-right: 10px;
+}
+
+.detail-list {
+    list-style-type: none;
+    padding: 0;
+    margin-bottom: 30px;
+    font-size: 17px;
+    color: #333;
+}
+
+.detail-list li {
+    padding: 10px 0;
+    border-bottom: 1px dashed #ddd;
+}
+
+.detail-list strong {
+    color: #004aad;
+}
+
+.detail-list li:last-child {
+    border-bottom: none;
+    font-size: 20px;
+    font-weight: bold;
+    color: #00a36c;
+}
+
+.btn-confirm {
+    display: block;
+    width: 100%;
+    padding: 12px 20px;
+    font-size: 16px;
+    font-weight: bold;
+    background-color: #00b74a;
+    color: white;
+    border: none;
+    border-radius: 10px;
+    transition: background-color 0.3s;
+    cursor: pointer;
+    text-align: center;
+    margin-top: 10px;
+}
+
+.btn-confirm:hover {
+    background-color: #009e3c;
+}
+.total-price {
+    font-size: 22px;
+    font-weight: bold;
+    color: #00b74a;
+    margin-top: 10px;
+}
+.buttons-container button {
+            background-color: #28a745;
+            color: white;
+            padding: 12px 30px;
+            border: none;
+            border-radius: 8px;
+            font-size: 1.1em;
+            cursor: pointer;
+            transition: background-color 0.3s ease;
+            margin: 0 10px;
+        }
+.buttons-container a {
+            background-color: #6c757d;
+            color: white;
+            padding: 12px 30px;
+            border-radius: 8px;
+            font-size: 1.1em;
+            text-decoration: none;
+            transition: background-color 0.3s ease;
+        }
+
+    </style>
+</head>
+<body>
+    <header>
+        <h1>TravelGo</h1>
+        <nav>
+            <a href="/">Home</a>
+            <a href="/dashboard">Dashboard</a>
+            <a href="/logout">Logout</a>
+        </nav>
+    </header>
+    <div class="container">
+        <h2>Confirm Your Hotel Booking</h2>
+        <ul class="detail-list">
+            <li><strong>Hotel:</strong> {{ booking.name }}</li>
+            <li><strong>Location:</strong> {{ booking.location }}</li>
+            <li><strong>Check-in:</strong> {{ booking.checkin_date }}</li>
+            <li><strong>Check-out:</strong> {{ booking.checkout_date }}</li>
+            <li><strong>Rooms:</strong> {{ booking.num_rooms }}</li>
+            <li><strong>Guests:</strong> {{ booking.num_guests }}</li>
+            <li><strong>Price/night:</strong>₹{{ booking.price_per_night }}</li>
+            <li><strong>Total nights:</strong> {{ booking.nights }}</li>
+        </ul>
+        <form id="confirmForm" method="POST" action="{{ url_for('confirm_hotel_booking') }}">
+            <input type="hidden" name="hotel_name" value="{{ booking.name }}">
+            <input type="hidden" name="location" value="{{ booking.location }}">
+            <input type="hidden" name="checkin" value="{{ booking.checkin_date }}">
+            <input type="hidden" name="checkout" value="{{ booking.checkout_date }}">
+            <input type="hidden" name="rooms" value="{{ booking.num_rooms }}">
+            <input type="hidden" name="guests" value="{{ booking.num_guests }}">
+            <input type="hidden" name="price" value="{{ booking.price_per_night }}">
+            <input type="hidden" name="rating" value="{{ booking.rating }}">
+            <div class="buttons-container">
+            <button id="confirmBookingBtn">Confirm Booking</button>
+            <a href="/hotel" class="btn btn-secondary">Go Back to Search</a>
+        </div>
+        </form>
+    </div>
+</body>
+</html>

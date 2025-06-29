@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Search Trains - TravelGo</title>
+    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    <style>
+        body {
+    margin: 0;
+    padding: 0;
+    font-family: 'Segoe UI', sans-serif;
+    background: linear-gradient(to right, #6a11cb, #2575fc);
+    color: #333;
+}
+
+header {
+    background-color: white;
+    padding: 15px 30px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+header h1 {
+    margin: 0;
+    font-size: 26px;
+    color: #004aad;
+}
+
+header nav a {
+    margin-left: 20px;
+    text-decoration: none;
+    color: #004aad;
+    font-weight: 600;
+}
+
+.search-container {
+    max-width: 1000px;
+    margin: 40px auto;
+    background: white;
+    padding: 30px;
+    border-radius: 16px;
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.1);
+}
+
+.search-container h2 {
+    color: #1769ff;
+    text-align: center;
+    margin-bottom: 30px;
+    font-weight: 700;
+}
+
+.form-row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+    justify-content: center;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    min-width: 180px;
+}
+
+.form-control {
+    padding: 10px;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+}
+
+#searchTrainBtn {
+    background-color: #00b74a;
+    border: none;
+    color: white;
+    padding: 12px 20px;
+    font-weight: bold;
+    font-size: 16px;
+    border-radius: 8px;
+    cursor: pointer;
+    margin-top: auto;
+    transition: background-color 0.3s ease;
+}
+
+#searchTrainBtn:hover {
+    background-color: #009e3c;
+}
+
+.results-container {
+    max-width: 1000px;
+    margin: 30px auto;
+    background: white;
+    padding: 25px;
+    border-radius: 16px;
+    box-shadow: 0 12px 24px rgba(0, 0, 0, 0.08);
+}
+
+.results-container h3 {
+    color: #1769ff;
+    text-align: center;
+    font-weight: 700;
+    margin-bottom: 20px;
+}
+
+.train-card {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: #f7f9ff;
+    border-left: 6px solid #004aad;
+    padding: 20px;
+    border-radius: 10px;
+    margin-bottom: 15px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+}
+
+.train-info h4 {
+    margin: 0 0 10px;
+    color: #004aad;
+}
+
+.train-info p {
+    margin: 4px 0;
+    font-size: 14px;
+}
+
+.train-price-book {
+    text-align: right;
+}
+
+.train-price {
+    font-size: 20px;
+    color: #28a745;
+    font-weight: bold;
+    margin-bottom: 10px;
+}
+
+.book-btn {
+    background-color: #004aad;
+    color: white;
+    padding: 10px 16px;
+    border: none;
+    border-radius: 8px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+}
+
+.book-btn:hover {
+    background-color: #003080;
+}
+
+.no-results {
+    text-align: center;
+    font-style: italic;
+    color: #555;
+    font-size: 15px;
+}
+
+footer {
+    text-align: center;
+    padding: 20px;
+    color: white;
+    font-size: 14px;
+}
+       /* Customer Service Floating Button */
+.support-btn {
+  position: fixed;
+  top: 80px;
+  right: 20px;
+  background-color: #004aad;
+  color: white;
+  border: none;
+  border-radius: 50px;
+  padding: 15px 20px;
+  cursor: pointer;
+  font-size: 16px;
+  z-index: 1000;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+}
+
+/* Popup Box */
+.support-popup {
+  display: none;
+  position: fixed;
+  top : 140px;
+  right: 20px;
+  background-color: white;
+  border: 1px solid #ccc;
+  border-radius: 10px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+  width: 250px;
+  z-index: 1001;
+}
+
+.support-popup ul {
+  list-style: none;
+  margin: 0;
+  padding: 10px;
+}
+
+.support-popup li {
+  padding: 10px;
+  border-bottom: 1px solid #eee;
+  cursor: pointer;
+}
+
+.support-popup li:hover {
+  background-color: #f3f3f3;
+}
+
+.support-popup h4 {
+  margin: 0;
+  padding: 10px;
+  background-color: #004aad;
+  color: white;
+  border-radius: 10px 10px 0 0;
+}
+
+    </style>
+</head>
+<body>
+ <!-- Floating Customer Support Button -->
+<button class="support-btn" onclick="toggleSupportPopup()"><img src="https://png.pngtree.com/png-vector/20240612/ourmid/pngtree-smiling-emoji-icon-with-headphones-png-image_12719375.png" style="width: 50px; height: 50px; vertical-align: middle; margin-right: 8px;"> Customer Service</button>
+
+<!-- Popup Box -->
+<div class="support-popup" id="supportPopup">
+  <h4>Need Help?</h4>
+  <ul>
+    <li onclick="alert('Email us at vikrAm@travelgo.com')">📧 Email Support</li>
+    <li onclick="alert('Call us at +91 93909 26424')">📞 Call Us</li>
+    <li><a href="/faqs" style="text-decoration: none">❓FAQs </a></li>
+    
+  </ul>
+</div>
+<!-- Script to toggle popup -->
+<script>
+  function toggleSupportPopup() {
+    var popup = document.getElementById("supportPopup");
+    popup.style.display = (popup.style.display === "block") ? "none" : "block";
+  }
+
+  document.addEventListener("click", function(event) {
+    var popup = document.getElementById("supportPopup");
+    var button = document.querySelector(".support-btn");
+    if (!popup.contains(event.target) && !button.contains(event.target)) {
+      popup.style.display = "none";
+    }
+  });
+</script>
+    <header>
+        <h1>TravelGo</h1>
+        <nav>
+            <a href="/">Home</a>
+            <a href="/dashboard">Dashboard</a>
+            <a href="/logout">Logout</a>
+        </nav>
+    </header>
+
+    <div class="search-container">
+        <h2><i class="fas fa-train"></i> Search & Book Trains</h2>
+        <div class="form-row">
+            <div class="form-group">
+                <label for="source">From</label>
+                <select id="source" class="form-control">
+                    <option value="">Select Source</option>
+                    <option value="Hyderabad">Hyderabad</option>
+                    <option value="Bengaluru">Bengaluru</option>
+                    <option value="Delhi">Delhi</option>
+                    <option value="Mumbai">Mumbai</option>
+                    <option value="Chennai">Chennai</option>
+                    <option value="Guntur">Guntur</option>
+                    <option value="Vijayawada">Vijayawada</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="destination">To</label>
+                <select id="destination" class="form-control">
+                    <option value="">Select Destination</option>
+                    <option value="Bengaluru">Bengaluru</option>
+                    <option value="Hyderabad">Hyderabad</option>
+                    <option value="Delhi">Delhi</option>
+                    <option value="Mumbai">Mumbai</option>
+                    <option value="Chennai">Chennai</option>
+                    <option value="Guntur">Guntur</option>
+                    <option value="Vijayawada">Vijayawada</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="date">Date</label>
+                <input type="date" id="date" class="form-control">
+            </div>
+            <div class="form-group">
+                <label for="num_persons">Passengers</label>
+                <input type="number" id="num_persons" class="form-control" min="1" value="1">
+            </div>
+            <div class="form-group">
+                <label for="train_type">Type</label>
+                <select id="train_type" class="form-control">
+                    <option value="All">All (AC/Non-AC)</option>
+                    <option value="AC">AC</option>
+                    <option value="Non-AC">Non-AC</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <button id="searchTrainBtn">Search</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="results-container" id="trainResultsContainer">
+        <h3>Available Trains</h3>
+        <div id="trainList">
+            <p class="no-results" id="initialNoResults">No trains found for your search criteria.</p>
+        </div>
+    </div>
+
+    <footer>
+        &copy; 2025 TravelGo. All rights reserved.
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const searchTrainBtn = document.getElementById('searchTrainBtn');
+            const trainListDiv = document.getElementById('trainList');
+            const initialNoResults = document.getElementById('initialNoResults');
+
+            // --- IMPORTANT: This static trainsData should be replaced by fetching from your Flask API ---
+            // For now, I'm keeping it as you provided, but in a real application, you'd make an AJAX call.
+            const trainsData = [
+                {"_id": "60a7d9b0e1d2c3f4a5b6c7d0", "name": "Duronto Express", "train_number": "12285", "source": "Hyderabad", "destination": "Delhi", "departure_time": "07:00 AM", "arrival_time": "05:00 AM (next day)", "price": 1800, "date": "2025-06-25", "type": "AC"},
+                {"_id": "60a7d9b0e1d2c3f4a5b6c7d1", "name": "AP Express", "train_number": "12723", "source": "Hyderabad", "destination": "Vijayawada", "departure_time": "09:00 AM", "arrival_time": "03:00 PM", "price": 450, "date": "2025-07-10", "type": "Non-AC"},
+                {"_id": "60a7d9b0e1d2c3f4a5b6c7d2", "name": "Gouthami Express", "train_number": "12737", "source": "Guntur", "destination": "Hyderabad", "departure_time": "08:00 PM", "arrival_time": "06:00 AM (next day)", "price": 600, "date": "2025-07-10", "type": "AC"},
+                {"_id": "60a7d9b0e1d2c3f4a5b6c7d3", "name": "Chennai Express", "train_number": "12839", "source": "Bengaluru", "destination": "Chennai", "departure_time": "10:30 AM", "arrival_time": "05:30 PM", "price": 750, "date": "2025-07-11", "type": "Non-AC"},
+                {"_id": "60a7d9b0e1d2c3f4a5b6c7d4", "name": "Mumbai Mail", "train_number": "12101", "source": "Hyderabad", "destination": "Mumbai", "departure_time": "06:00 PM", "arrival_time": "09:00 AM (next day)", "price": 1200, "date": "2025-07-10", "type": "AC"},
+                {"_id": "60a7d9b0e1d2c3f4a5b6c7d5", "name": "Godavari Express", "train_number": "12720", "source": "Vijayawada", "destination": "Hyderabad", "departure_time": "05:00 PM", "arrival_time": "11:00 PM", "price": 400, "date": "2025-07-10", "type": "Non-AC"},
+            ];
+
+            // Set today's date as default for the date input if not already set by Flask
+            const dateInput = document.getElementById('date');
+            if (!dateInput.value) {
+                const today = new Date();
+                const yyyy = today.getFullYear();
+                const mm = String(today.getMonth() + 1).padStart(2, '0'); // Months are 0-indexed
+                const dd = String(today.getDate()).padStart(2, '0');
+                dateInput.value = `${yyyy}-${mm}-${dd}`;
+            }
+
+            searchTrainBtn.addEventListener('click', function() {
+                const source = document.getElementById('source').value;
+                const destination = document.getElementById('destination').value;
+                const date = document.getElementById('date').value;
+                const numPersons = document.getElementById('num_persons').value;
+                const trainType = document.getElementById('train_type').value;
+
+                if (!source || !destination || !date || !numPersons) {
+                    alert('Please fill in all search fields.');
+                    return;
+                }
+                if (source === destination) {
+                    alert('Source and destination cannot be the same.');
+                    return;
+                }
+
+                trainListDiv.innerHTML = ''; // Clear previous results
+                
+                // --- THIS SECTION SHOULD BE REPLACED WITH AN AJAX CALL TO YOUR FLASK API ---
+                // Example of how you would fetch from your Flask endpoint:
+                // fetch(`/api/trains_search?source=${source}&destination=${destination}&date=${date}&type=${trainType}`)
+                //     .then(response => response.json())
+                //     .then(filteredTrains => {
+                //         // Your current rendering logic would go here, using filteredTrains
+                //     })
+                //     .catch(error => console.error('Error fetching trains:', error));
+                // --- END OF API CALL SUGGESTION ---
+
+                // Using the static trainsData for now, as per your original script
+                const filteredTrains = trainsData.filter(train => {
+                    const matchesSource = train.source === source;
+                    const matchesDestination = train.destination === destination;
+                    const matchesDate = train.date === date;
+                    const matchesType = (trainType === 'All' || train.type === trainType);
+                    return matchesSource && matchesDestination && matchesDate && matchesType;
+                });
+
+                if (filteredTrains.length > 0) {
+                    initialNoResults.style.display = 'none'; // Hide "No trains found" message
+                    filteredTrains.forEach(train => {
+                        const trainCard = document.createElement('div');
+                        trainCard.classList.add('train-card');
+                        trainCard.innerHTML = `
+                            <div class="train-info">
+                                <h4>${train.name} (${train.train_number})</h4>
+                                <p><strong>From:</strong> ${train.source} <strong>To:</strong> ${train.destination}</p>
+                                <p><strong>Departure:</strong> ${train.departure_time} <strong>Arrival:</strong> ${train.arrival_time}</p>
+                                <p><strong>Type:</strong> ${train.type}</p>
+                            </div>
+                            <div class="train-price-book">
+                                <div class="train-price">₹${train.price.toLocaleString('en-IN')}</div>
+                                <button class="book-btn"
+                                        data-name="${train.name}"
+                                        data-train-number="${train.train_number}"
+                                        data-source="${train.source}"
+                                        data-destination="${train.destination}"
+                                        data-departure-time="${train.departure_time}"
+                                        data-arrival-time="${train.arrival_time}"
+                                        data-price="${train.price}"
+                                        data-date="${train.date}"
+                                        data-type="${train.type}"
+                                        data-num-persons="${numPersons}"
+                                        data-train-id="${train._id}">
+                                    Book Now
+                                </button>
+                            </div>
+                        `;
+                        trainListDiv.appendChild(trainCard);
+                    });
+
+                    // Add event listeners to the new "Book Now" buttons
+                    document.querySelectorAll('.book-btn').forEach(button => {
+                        button.addEventListener('click', function() {
+                            const name = this.dataset.name;
+                            const trainNumber = this.dataset.trainNumber;
+                            const source = this.dataset.source;
+                            const destination = this.dataset.destination;
+                            const departureTime = this.dataset.departureTime;
+                            const arrivalTime = this.dataset.arrivalTime;
+                            const price = this.dataset.price;
+                            const date = this.dataset.date;
+                            const numPersons = this.dataset.numPersons;
+                            const trainId = this.dataset.trainId;
+                            const type = this.dataset.type; // Get train type
+
+                            window.location.href = `/confirm_train_details?name=${name}&trainNumber=${trainNumber}&source=${source}&destination=${destination}&departureTime=${departureTime}&arrivalTime=${arrivalTime}&price=${price}&date=${date}&persons=${numPersons}&trainId=${trainId}&type=${type}`;
+                        });
+                    });
+
+                } else {
+                    initialNoResults.style.display = 'block'; // Show "No trains found" message
+                    trainListDiv.innerHTML = ''; // Ensure list is empty before adding "no results" message
+                    trainListDiv.appendChild(initialNoResults); // Append it to the list div
+                }
+            });
+
+            // Auto-fill and search if redirected with query parameters (e.g., from an error page)
+            const urlParams = new URLSearchParams(window.location.search);
+            if (urlParams.has('source') && urlParams.has('destination') && urlParams.has('date')) {
+                document.getElementById('source').value = urlParams.get('source');
+                document.getElementById('destination').value = urlParams.get('destination');
+                document.getElementById('date').value = urlParams.get('date');
+                document.getElementById('num_persons').value = urlParams.get('num_persons') || '1';
+                document.getElementById('train_type').value = urlParams.get('type') || 'All';
+
+                searchTrainBtn.click(); // Automatically trigger the search
+            }
+        });
+    </script>
+</body>
+</html>

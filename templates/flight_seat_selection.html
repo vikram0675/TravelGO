@@ -1,0 +1,227 @@
+<!DOCTYPE html> 
+<html>
+<head>
+  <title>Flight Seat Selection</title>
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background: #f3f8ff;
+      color: #333;
+    }
+
+    header {
+      background-color: #004aad;
+      color: white;
+      padding: 15px;
+      text-align: center;
+      font-size: 1.5rem;
+      font-weight: bold;
+    }
+
+    h2 {
+      text-align: center;
+      color: #004aad;
+      margin-top: 30px;
+    }
+
+    #seat-layout {
+      width: fit-content;
+      margin: 30px auto;
+      padding: 20px;
+      background: #ffffff;
+      border-radius: 12px;
+      box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+    }
+
+    .seat-row {
+      margin-bottom: 10px;
+      display: flex;
+      justify-content: center;
+    }
+
+    .seat {
+      width: 40px;
+      height: 40px;
+      margin: 5px;
+      display: inline-block;
+      text-align: center;
+      line-height: 40px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      background-color: #e0e0e0;
+      cursor: pointer;
+      transition: all 0.2s ease-in-out;
+      font-weight: 500;
+    }
+
+    .seat:hover:not(.booked):not(.selected) {
+      background-color: #d6eaff;
+    }
+
+    .seat.booked {
+      background-color: #f44336;
+      color: white;
+      cursor: not-allowed;
+    }
+
+    .seat.selected {
+      background-color: #4CAF50;
+      color: white;
+    }
+
+    form {
+      text-align: center;
+      margin-top: 20px;
+    }
+
+    button[type="submit"] {
+      background-color: #004aad;
+      color: white;
+      padding: 12px 24px;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+    button[type="button"] {
+      background-color: #f30808;
+      color: white;
+      padding: 12px 24px;
+      border: none;
+      border-radius: 8px;
+      font-size: 16px;
+      cursor: pointer;
+      transition: background-color 0.3s ease;
+    }
+
+    button[type="submit"]:hover {
+      background-color: #003080;
+    }
+
+    @media (max-width: 600px) {
+      .seat {
+        width: 32px;
+        height: 32px;
+        line-height: 32px;
+        font-size: 0.9rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>TravelGo - Select Your Flight Seat</header>
+
+  <h2>Select Your Seats</h2>
+
+  <div id="seat-layout"></div>
+
+  <form action="/confirm_flight_booking" method="post">
+    <!-- Hidden inputs with values passed from Flask -->
+    <input type="hidden" name="flight_id" value="{{ flight_id }}">
+    <input type="hidden" name="airline" value="{{ airline }}">
+    <input type="hidden" name="flight_number" value="{{ flight_number }}">
+    <input type="hidden" name="source" value="{{ source }}">
+    <input type="hidden" name="destination" value="{{ destination }}">
+    <input type="hidden" name="departure_time" value="{{ departure_time }}">
+    <input type="hidden" name="arrival_time" value="{{ arrival_time }}">
+    <input type="hidden" name="travel_date" value="{{ travel_date }}">
+    <input type="hidden" name="num_persons" value="{{ num_persons }}">
+    <input type="hidden" name="price_per_person" value="{{ price_per_person }}">
+    <input type="hidden" name="total_price" value="{{ price_per_person|float * num_persons|int }}">
+    <input type="hidden" name="flight_class" value="{{ flight_class }}">
+    <input type="hidden" id="selected-seats" name="selected_seats">
+
+    <button type="submit">Confirm Booking</button>
+    <button type="button" onclick="window.location.href='/dashboard'">
+  Cancel
+</button>
+
+</form>
+
+<script>
+  const flightId = "{{ flight_id }}";
+  const travelDate = "{{ travel_date }}";
+  const flightClass = "{{ flight_class }}"; 
+  const seatLayoutDiv = document.getElementById("seat-layout");
+  const selectedSeatsInput = document.getElementById("selected-seats");
+  const numPersons = parseInt("{{ num_persons }}");
+
+  const rows = 13;  // 13 x 4 = 52 seats
+  const cols = 4;
+  const selectedSeats = [];
+
+  function toggleSeat(seatDiv, seatNumber) {
+    if (seatDiv.classList.contains("booked")) return;
+
+    if (seatDiv.classList.contains("selected")) {
+      // Remove seat
+      seatDiv.classList.remove("selected");
+      const index = selectedSeats.indexOf(seatNumber);
+      if (index !== -1) selectedSeats.splice(index, 1);
+    } else {
+      if (selectedSeats.length >= numPersons) {
+        alert(`You can select up to ${numPersons} seat(s) only.`);
+        return;
+      }
+      seatDiv.classList.add("selected");
+      selectedSeats.push(seatNumber);
+    }
+
+    selectedSeatsInput.value = selectedSeats.join(',');
+  }
+
+  function renderSeatLayout(bookedSeats) {
+    for (let row = 0; row < rows; row++) {
+      const rowDiv = document.createElement('div');
+      rowDiv.classList.add("seat-row");
+
+      for (let col = 0; col < cols; col++) {
+        const seatNum = row * cols + col + 1;
+        const seatLabel = `S${seatNum}`;
+        const seatDiv = document.createElement('div');
+        seatDiv.classList.add('seat');
+        seatDiv.innerText = seatLabel;
+
+        if (bookedSeats.includes(seatLabel)) {
+          seatDiv.classList.add('booked');
+        } else {
+          seatDiv.addEventListener('click', () => toggleSeat(seatDiv, seatLabel));
+        }
+
+        rowDiv.appendChild(seatDiv);
+      }
+
+      seatLayoutDiv.appendChild(rowDiv);
+    }
+  }
+
+  async function loadBookedSeats() {
+    try {
+      const flightClass = "{{ flight_class }}";
+      const res = await fetch(`/get_booked_seats?flight_id=${flightId}&travel_date=${travelDate}&flight_class=${flightClass}`);
+      const data = await res.json();
+      const bookedSeats = data.booked_seats || [];
+      renderSeatLayout(bookedSeats);
+    } catch (error) {
+      console.error("Error fetching booked seats:", error);
+    }
+  }
+
+  document.querySelector("form").addEventListener("submit", function (e) {
+    if (selectedSeats.length === 0) {
+      alert("Please select at least one seat before confirming booking.");
+      e.preventDefault(); // Prevent form submission
+    } else if (selectedSeats.length !== numPersons) {
+      alert(`Please select exactly ${numPersons} seat(s).`);
+      e.preventDefault(); // Prevent form submission
+    }
+  });
+
+  window.onload = loadBookedSeats;
+</script>
+
+</body>
+</html>
