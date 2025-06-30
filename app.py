@@ -1,36 +1,47 @@
-from flask import Flask, render_template, request, redirect, url_for,session, jsonify, flash
-##import boto3
-##from boto3.dynamodb.conditions import Key, Attr
-from pymongo import MongoClient
+from flask import Flask, render_template, request, redirect, url_for, session, jsonify, flash
+import boto3
+from boto3.dynamodb.conditions import Key, Attr
 from werkzeug.security import generate_password_hash, check_password_hash
 from datetime import datetime
-from bson.objectid import ObjectId
-##from decimal import Decimal
-from bson.errors import InvalidId
-##import uuid
-##import random
-app = Flask(__name__)
-app.secret_key = 'Your_secret_key'
-# MongoDB connection
-client = MongoClient('mongodb+srv://Mohan:er2af5Q1UBCewcmZ@cluster0.di6bzxd.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0')
-db = client['travel_booking_db']
-##dynamodb = boto3.resource(
-##    'dynamodb',
-##    aws_access_key_id = '', 
-##    aws_secret_access_key = '',
-##    region_name = 'ap-south-1'
-##)
-##user_table = dynamodb.Table('travelgo_users')
-##trains_table = dynamodb.Table('trains')
-##boo
-##sns_client = boto3.client(
-##    'sns',
-##
-##)
-# Collections
-users_collection = db['users']
-trains_collection = db['trains']
-bookings_collection = db['bookings']
+from decimal import Decimal
+import uuid
+import random
+
+
+app = Flask(name)
+app.secret_key = 'your_secret_key_here' # IMPORTANT: Change this to a strong, random key in production!
+
+
+# AWS Setup using IAM Role
+REGION = 'us-east-1'  # Replace with your actual AWS region
+dynamodb = boto3.resource('dynamodb', region_name=REGION)
+sns_client = boto3.client('sns', region_name=REGION)
+
+
+users_table = dynamodb.Table('travelgo_users')
+trains_table = dynamodb.Table('trains') # Note: This table is declared but not used in the provided routes.
+bookings_table = dynamodb.Table('bookings')
+
+
+SNS_TOPIC_ARN = 'arn:aws:sns:us-east-1:905418361023:TravelGoapplication:ccb02232-a643-4dd7-9446-46758d821ec2'  # Replace with actual SNS topic ARN
+
+
+# Function to send SNS notifications
+# This function is duplicated in the original code, removing the duplicate.
+def send_sns_notification(subject, message):
+    try:
+        sns_client.publish(
+            TopicArn=SNS_TOPIC_ARN,
+            Subject=subject,
+            Message=message
+        )
+    except Exception as e:
+        print(f"SNS Error: Could not send notification - {e}")
+        # Optionally, flash an error message to the user or log it more robustly.
+
+
+# Routes
+
 @app.route('/api/trains_search')
 def api_trains_search():
     source = request.args.get('source')
@@ -38,13 +49,13 @@ def api_trains_search():
     date = request.args.get('date')
     if not source or not destination or not date:
         return jsonify([])
-    matching_trains = list(trains_collection.find({
-        'source': source,
-        'destination': destination,
-        'date': date
-    }))
-    for train in matching_trains:
-        train['_id'] = str(train['_id'])
+    response = trains_table.scan(
+        FilterExpression=Attr('source').eq(source) &
+                        Attr('destination').eq(destination) &
+                        Attr('date').eq(date)
+    )
+    matching_trains = response.get('Items', [])
+ 
     return jsonify(matching_trains)
 @app.route('/bus')
 def bus():
@@ -59,11 +70,13 @@ def get_booked_seats():
     if not bus_id or not travel_date:
         return jsonify({'success': False, 'message': 'Missing bus_id or date'}), 400
 
-    bookings = bookings_collection.find({
-        'booking_type': 'bus',
-        'item_id': bus_id,
-        'travel_date': travel_date
-    })
+    response = bookings_table.scan(
+        FilterExpression=Attr('booking_type').eq('bus') &
+                     Attr('item_id').eq(bus_id) &
+                     Attr('travel_date').eq(travel_date)
+    )
+    bookings = response.get('Items', [])
+
 
     booked_seats = []
     for b in bookings:
@@ -81,7 +94,10 @@ def final_confirm_booking():
         return jsonify({'success': False, 'message': 'No pending booking found'}), 400
     try:
         booking_data['booking_date'] = datetime.now().isoformat()
-        bookings_collection.insert_one(booking_data)
+        booking_data['booking_id'] = str(uuid.uuid4())
+        bookings_table.put_item(Item=booking_data)
+        send_sns_notification("Bus Booking Confirmed", f"Booking by {booking_data['user_email']} on {booking_data['travel_date']}")
+
         flash('Booking confirmed successfully!', 'success')
         return jsonify({'success': True, 'message': 'Booking confirmed','redirect': url_for('dashboard')})
     except Exception as e:
@@ -122,16 +138,17 @@ def confirm_bus_details():
     return render_template('confirm_bus_details.html',booking=booking_details)
 # --- Sample Data Insertion Functions ---
 def insert_sample_train_data():
-    if trains_collection.count_documents({}) == 0:
         sample_trains = [
-            {"_id": ObjectId(), "name": "Duronto Express","train_number": "12285", "source": "Hyderabad", "destination": "Delhi","departure_time": "07:00 AM", "arrival_time": "05:00 AM (next day)","price": 1800, "date": "2025-07-10"},
-            {"_id": ObjectId(), "name": "AP Express", "train_number":"12723", "source": "Hyderabad", "destination": "Vijayawada","departure_time": "09:00 AM", "arrival_time": "03:00 PM", "price": 450,"date": "2025-07-10"},
-            {"_id": ObjectId(), "name": "Gouthami Express","train_number": "12737", "source": "Guntur", "destination": "Hyderabad","departure_time": "08:00 PM", "arrival_time": "06:00 AM (next day)","price": 600, "date": "2025-07-10"},
-            {"_id": ObjectId(), "name": "Chennai Express","train_number": "12839", "source": "Bengaluru", "destination":"Chennai", "departure_time": "10:30 AM", "arrival_time": "05:30 PM","price": 750, "date": "2025-07-11"},
-            {"_id": ObjectId(), "name": "Mumbai Mail", "train_number":"12101", "source": "Hyderabad", "destination": "Mumbai","departure_time": "06:00 PM", "arrival_time": "09:00 AM (next day)","price": 1200, "date": "2025-07-10"},
-            {"_id": ObjectId(), "name": "Godavari Express","train_number": "12720", "source": "Vijayawada", "destination":"Hyderabad", "departure_time": "05:00 PM", "arrival_time": "11:00 PM","price": 400, "date": "2025-07-10"},
+            {"name": "Duronto Express","train_number": "12285", "source": "Hyderabad", "destination": "Delhi","departure_time": "07:00 AM", "arrival_time": "05:00 AM (next day)","price": 1800, "date": "2025-07-10"},
+            { "name": "AP Express", "train_number":"12723", "source": "Hyderabad", "destination": "Vijayawada","departure_time": "09:00 AM", "arrival_time": "03:00 PM", "price": 450,"date": "2025-07-10"},
+            {"name": "Gouthami Express","train_number": "12737", "source": "Guntur", "destination": "Hyderabad","departure_time": "08:00 PM", "arrival_time": "06:00 AM (next day)","price": 600, "date": "2025-07-10"},
+            {"name": "Chennai Express","train_number": "12839", "source": "Bengaluru", "destination":"Chennai", "departure_time": "10:30 AM", "arrival_time": "05:30 PM","price": 750, "date": "2025-07-11"},
+            {"name": "Mumbai Mail", "train_number":"12101", "source": "Hyderabad", "destination": "Mumbai","departure_time": "06:00 PM", "arrival_time": "09:00 AM (next day)","price": 1200, "date": "2025-07-10"},
+            {"name": "Godavari Express","train_number": "12720", "source": "Vijayawada", "destination":"Hyderabad", "departure_time": "05:00 PM", "arrival_time": "11:00 PM","price": 400, "date": "2025-07-10"},
         ]
-        trains_collection.insert_many(sample_trains)
+        for train in sample_trains:
+            train['train_id'] = str(uuid.uuid4())
+            trains_table.put_item(Item=train)
 @app.route('/')
 def index():
     return render_template('index.html')
@@ -140,11 +157,14 @@ def register():
     if request.method == 'POST':
         email = request.form['email']
         password = request.form['password']
-        if users_collection.find_one({'email': email}):
+        response = users_table.get_item(Key={'email': email})
+        if 'Item' in response:
             flash('Email already exists!', 'error')
             return render_template('register.html')
+
         hashed_password = generate_password_hash(password)
-        users_collection.insert_one({'email': email, 'password':hashed_password})
+        users_table.put_item(Item={'email': email, 'password': hashed_password})
+
         flash('Registration successful! Please log in.', 'success')
         return redirect(url_for('login'))
     return render_template('register.html')
@@ -155,7 +175,9 @@ def login():
     if request.method == 'POST':
         email = request.form['email']
         password = request.form['password']
-        user = users_collection.find_one({'email': email})
+        response = users_table.get_item(Key={'email': email})
+        user = response.get('Item')
+
         if user and check_password_hash(user['password'], password):
             session['email'] = email
             flash('Logged in successfully!', 'success')
@@ -174,10 +196,10 @@ def dashboard():
     if 'email' not in session:
         return redirect(url_for('login'))
     user_email = session['email']
-    user_bookings = list(bookings_collection.find({'user_email': user_email}).sort('booking_date', -1))
-    for booking in user_bookings:
-        if '_id' in booking and isinstance(booking['_id'], ObjectId):
-            booking['_id'] = str(booking['_id'])
+    response = bookings_table.scan(
+        FilterExpression=Attr('user_email').eq(user_email)
+    )
+    user_bookings = response.get('Items', [])
     return render_template('dashboard.html', username=user_email, bookings=user_bookings)
 @app.route('/train')
 def train():
@@ -225,11 +247,18 @@ def final_confirm_train_booking():
         return jsonify({'success': False, 'message': 'No pending booking to confirm.'}), 400
     try:
         # Fetch already booked seats for this train and date
-        existing_bookings = bookings_collection.find({
-            'booking_type': 'train',
-            'item_id': booking_data['item_id'],
-            'travel_date': booking_data['travel_date']
-        })
+        response = bookings_table.scan(
+                 FilterExpression=Attr('booking_type').eq('train') &
+                             Attr('item_id').eq(booking_data['item_id']) &
+                             Attr('travel_date').eq(booking_data['travel_date'])
+        )
+        existing_bookings = response.get('Items', [])
+
+        # after allocating seats:
+        booking_data['booking_id'] = str(uuid.uuid4())
+        bookings_table.put_item(Item=booking_data)
+        send_sns_notification("Train Booking Confirmed", f"Train booking by {booking_data['user_email']} on {booking_data['travel_date']}")
+
         booked_seats = set()
         for b in existing_bookings:
             if 'seats_display' in b:
@@ -243,7 +272,6 @@ def final_confirm_train_booking():
         allocated_seats = available_seats[:booking_data['num_persons']]
         booking_data['seats_display'] = ', '.join(allocated_seats)
         booking_data['booking_date'] = datetime.now().isoformat()
-        bookings_collection.insert_one(booking_data)
         flash('Train booking confirmed successfully!', 'success')
         return jsonify({
             'success': True,
@@ -263,18 +291,20 @@ def cancel_booking():
         flash("Error: Booking ID is missing for cancellation.", 'error')
         return redirect(url_for('dashboard'))
     try:
-        obj_booking_id = ObjectId(booking_id)
-        booking_to_cancel = bookings_collection.find_one({'_id': obj_booking_id, 'user_email': user_email})
-        if booking_to_cancel:
-            result = bookings_collection.delete_one({'_id': obj_booking_id, 'user_email': user_email})
-            if result.deleted_count == 1:
-                flash(f"Booking cancelled successfully!", 'success')
-            else:
-                flash(f"Booking not found or not authorized to cancel.", 'error')
+        response = bookings_table.get_item(Key={'booking_id': booking_id, 'user_email': session['email']})
+        if 'Item' in response:
+            bookings_table.delete_item(Key={'booking_id': booking_id, 'user_email': session['email']})
+            flash("Cancelled successfully", 'success')
         else:
-            flash(f"Booking not found or not authorized to cancel.", 'error')
-    except InvalidId:
-        flash(f"Invalid booking ID format.", 'error')
+            flash("Booking not found or unauthorized.", 'error')
+
+        response = bookings_table.get_item(Key={'booking_id': booking_id, 'user_email': session['email']})
+        if 'Item' in response:
+            bookings_table.delete_item(Key={'booking_id': booking_id, 'user_email': session['email']})
+            flash("Cancelled successfully", 'success')
+        else:
+            flash("Booking not found or unauthorized.", 'error')
+
     except Exception as e:
         flash(f"Failed to cancel booking: {str(e)}", 'error')
     return redirect(url_for('dashboard'))
@@ -324,7 +354,10 @@ def confirm_hotel_booking():
     co = datetime.fromisoformat(booking['checkout_date'])
     nights = (co - ci).days
     booking['total_price'] = booking['price_per_night'] * booking['num_rooms'] * nights
-    bookings_collection.insert_one(booking)
+    booking['booking_id'] = str(uuid.uuid4())
+    bookings_table.put_item(Item=booking)
+    send_sns_notification("Hotel Booking Confirmed", f"Hotel booking by {booking['user_email']} from {booking['checkin_date']} to {booking['checkout_date']}")
+
     flash('Hotel booking confirmed successfully!', 'success')
     return redirect(url_for('dashboard'))
 @app.route('/flight')
@@ -336,7 +369,7 @@ def flight():
 def flight_seat_selection():
     flight_id = request.args.get('flight_id')
     # Fetch booked seats from database for this flight_id
-    booked = bookings_collection.find({"flight_id": flight_id})
+    booked = bookings_table.find({"flight_id": flight_id})
     booked_seats = []
     for b in booked:
         if 'selected_seats' in b:
@@ -404,12 +437,17 @@ def confirm_flight_booking():
     flight_class = request.form['flight_class']
 
     # Restrict seats only within same flight, date and class
-    existing_bookings = bookings_collection.find({
-        'flight_id': flight_id,
-        'travel_date': travel_date,
-        'booking_type': 'flight',
-        'flight_class': flight_class  # ✅ key fix
-    })
+    response = bookings_table.scan(
+        FilterExpression=Attr('flight_id').eq(flight_id) &
+                         Attr('travel_date').eq(travel_date) &
+                         Attr('booking_type').eq('flight') &
+                         Attr('flight_class').eq(flight_class)
+    )
+    existing_bookings = response.get('Items', [])
+
+    booking['booking_id'] = str(uuid.uuid4())
+    bookings_table.put_item(Item=booking)
+    send_sns_notification("Flight Booking Confirmed", f"Flight booking by {booking['user_email']} on {booking['travel_date']} in {flight_class}")
 
     already_booked = set()
     for b in existing_bookings:
@@ -440,7 +478,6 @@ def confirm_flight_booking():
         'booking_date':      datetime.now().isoformat()
     }
 
-    bookings_collection.insert_one(booking)
     flash('Flight booking confirmed successfully!', 'success')
     return redirect(url_for('dashboard'))
 
@@ -452,21 +489,26 @@ def booked_seats():
     bus_id = request.args.get('bus_id')
     date = request.args.get('date')
 
-    bookings = bookings_collection.find({
-        "item_id": bus_id,
-        "travel_date": date,
-        "booking_type": "bus"
-    })
+    if not bus_id or not date:
+        return jsonify([])
 
+    response = bookings_table.scan(
+        FilterExpression=Attr('item_id').eq(bus_id) &
+                         Attr('travel_date').eq(date) &
+                         Attr('booking_type').eq('bus')
+    )
+
+    bookings = response.get('Items', [])
     booked_seats = []
     for b in bookings:
         if "selected_seats" in b:
-            booked_seats.extend(b["selected_seats"])  # assuming list of integers
+            booked_seats.extend(b["selected_seats"])
 
     return jsonify([str(seat) for seat in booked_seats])
 
+
 def get_flight_booked_seats(flight_id, travel_date):
-    booked = bookings_collection.find({
+    booked = bookings_table.find({
         'booking_type': 'flight',
         'flight_id': flight_id,
         'travel_date': travel_date
@@ -480,18 +522,19 @@ def get_flight_booked_seats(flight_id, travel_date):
 def get_flight_booked_seats():
     flight_id = request.args.get('flight_id')
     travel_date = request.args.get('travel_date')
-    flight_class = request.args.get('flight_class')  # ✅ ADD THIS
+    flight_class = request.args.get('flight_class')
 
     if not flight_id or not travel_date or not flight_class:
         return jsonify({'booked_seats': []})
 
-    bookings = bookings_collection.find({
-        "flight_id": flight_id,
-        "travel_date": travel_date,
-        "flight_class": flight_class,
-        "booking_type": "flight"
-    })
-
+    response = bookings_table.scan(
+        FilterExpression=Attr('flight_id').eq(flight_id) &
+                         Attr('travel_date').eq(travel_date) &
+                         Attr('flight_class').eq(flight_class) &
+                         Attr('booking_type').eq('flight')
+    )
+    bookings = response.get('Items', [])
+    
     booked_seats = []
     for b in bookings:
         if "selected_seats" in b:
@@ -500,7 +543,8 @@ def get_flight_booked_seats():
     return jsonify({'booked_seats': booked_seats})
 
 
-if __name__ == '__main__':
-    insert_sample_train_data()
-    app.run(debug=True)
 
+
+if name == 'main':
+    # IMPORTANT: In a production environment, disable debug mode and specify a production-ready host.
+    app.run(debug=True, host='0.0.0.0')
