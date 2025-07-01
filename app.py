@@ -222,7 +222,13 @@ def confirm_train_details():
     destination = request.args.get('destination')
     departure_time = request.args.get('departureTime')
     arrival_time = request.args.get('arrivalTime')
-    price_per_person = float(request.args.get('price'))
+    price_str = request.args.get('price')
+    print("DEBUG: Received train price =", price_str)
+    try:
+        price_per_person = float(price_str)
+    except (ValueError, TypeError):
+        flash('Invalid train price format.', 'error')
+        return redirect(url_for('train'))
     travel_date = request.args.get('date')
     num_persons = int(request.args.get('persons'))
     train_id = request.args.get('trainId')
@@ -326,7 +332,13 @@ def confirm_hotel_details():
         'checkout_date':   request.args.get('checkout'),
         'num_rooms':       int(request.args.get('rooms')),
         'num_guests':      int(request.args.get('guests')),
-        'price_per_night': float(request.args.get('price')),
+        price_str = request.args.get('price')
+        print("DEBUG: Hotel price =", price_str)
+        try:
+            price_per_night = float(price_str)
+        except (ValueError, TypeError):
+            flash("Invalid hotel price format.", 'error')
+            return redirect(url_for('hotel'))
         'rating':          int(request.args.get('rating'))
     }
     # compute nights & total
@@ -350,7 +362,7 @@ def confirm_hotel_booking():
         'checkout_date':   request.form['checkout'],
         'num_rooms':       int(request.form['rooms']),
         'num_guests':      int(request.form['guests']),
-        'price_per_night': float(request.form['price']),
+        'price_per_night': price_per_night,
         'rating':          int(request.form['rating']),
         'user_email':      session['email'],
         'booking_date':    datetime.now().isoformat()
@@ -408,7 +420,13 @@ def confirm_flight_details():
     arrival_time = request.args.get('arrival')
     travel_date = request.args.get('date')
     num_persons = int(request.args.get('passengers'))
-    price_per_person = float(request.args.get('price'))
+    price_str = request.args.get('price')
+    print("DEBUG: Flight price =", price_str)
+    try:
+        price_per_person = float(price_str)
+    except (ValueError, TypeError):
+        flash("Invalid flight price format.", 'error')
+        return redirect(url_for('flight'))
     flight_class = request.args.get('class')  # ✅ make sure this is fetched
 
     total_price = num_persons * price_per_person
