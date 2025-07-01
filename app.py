@@ -111,7 +111,13 @@ def confirm_bus_details():
     destination = request.args.get('destination')
     time = request.args.get('time')
     bus_type = request.args.get('type')
-    price_per_person = float(request.args.get('price'))
+    price_str = request.args.get('price')
+    print("DEBUG: Received price =", price_str)
+    try:
+        price_per_person = float(price_str)
+    except (ValueError, TypeError):
+        flash('Invalid price format.', 'error')
+        return redirect(url_for('bus'))
     travel_date = request.args.get('date')
     num_persons = int(request.args.get('persons'))
     bus_id = request.args.get('busId')
