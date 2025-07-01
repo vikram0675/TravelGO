@@ -23,7 +23,7 @@ trains_table = dynamodb.Table('trains') # Note: This table is declared but not u
 bookings_table = dynamodb.Table('bookings')
 
 
-SNS_TOPIC_ARN = 'arn:aws:sns:us-east-1:905418361023:TravelGoapplication:ccb02232-a643-4dd7-9446-46758d821ec2'  # Replace with actual SNS topic ARN
+SNS_TOPIC_ARN = 'arn:aws:sns:us-east-1:149536455348:TravelGo:75e796e5-dff4-4ae3-a2d8-2de8250743da'  # Replace with actual SNS topic ARN
 
 
 # Function to send SNS notifications
