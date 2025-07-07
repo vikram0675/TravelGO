@@ -7,7 +7,6 @@ from decimal import Decimal
 import uuid
 import random
 
-
 app = Flask(__name__)
 app.secret_key = 'vikrAm0675' # IMPORTANT: Change this to a strong, random key in production!
 
