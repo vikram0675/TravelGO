@@ -42,6 +42,7 @@
 
 header {
     background-color: white;
+    color: #004aad;
     padding: 15px 30px;
     display: flex;
     justify-content: space-between;
@@ -180,9 +181,92 @@ p {
     font-style: italic;
     color: #555;
 }
+       /* Customer Service Floating Button */
+.support-btn {
+  position: fixed;
+  top: 80px;
+  right: 20px;
+  background-color: #004aad;
+  color: white;
+  border: none;
+  border-radius: 50px;
+  padding: 15px 20px;
+  cursor: pointer;
+  font-size: 16px;
+  z-index: 1000;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+}
+
+/* Popup Box */
+.support-popup {
+  display: none;
+  position: fixed;
+  top : 140px;
+  right: 20px;
+  background-color: white;
+  border: 1px solid #ccc;
+  border-radius: 10px;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+  width: 250px;
+  z-index: 1001;
+}
+
+.support-popup ul {
+  list-style: none;
+  margin: 0;
+  padding: 10px;
+}
+
+.support-popup li {
+  padding: 10px;
+  border-bottom: 1px solid #eee;
+  cursor: pointer;
+}
+
+.support-popup li:hover {
+  background-color: #f3f3f3;
+}
+
+.support-popup h4 {
+  margin: 0;
+  padding: 10px;
+  background-color: #004aad;
+  color: white;
+  border-radius: 10px 10px 0 0;
+}
+
 
     </style>
+    </style>
 </head>
+<!-- Floating Customer Support Button -->
+<button class="support-btn" onclick="toggleSupportPopup()"><img src="https://png.pngtree.com/png-vector/20240612/ourmid/pngtree-smiling-emoji-icon-with-headphones-png-image_12719375.png" style="width: 50px; height: 50px; vertical-align: middle; margin-right: 8px;"> Customer Service</button>
+
+<!-- Popup Box -->
+<div class="support-popup" id="supportPopup">
+  <h4>Need Help?</h4>
+  <ul>
+    <li onclick="alert('Email us at vikrAm@travelgo.com')">📧 Email Support</li>
+    <li onclick="alert('Call us at +91 93909 26424')">📞 Call Us</li>
+    <li><a href="/faqs" style="text-decoration: none">❓FAQs </a></li>
+    
+  </ul>
+</div>
+<!-- Script to toggle popup -->
+<script>
+  function toggleSupportPopup() {
+    var popup = document.getElementById("supportPopup");
+    popup.style.display = (popup.style.display === "block") ? "none" : "block";
+  }
+
+  document.addEventListener("click", function(event) {
+    var popup = document.getElementById("supportPopup");
+    var button = document.querySelector(".support-btn");
+    if (!popup.contains(event.target) && !button.contains(event.target)) {
+      popup.style.display = "none";
+    }
+  });
+</script>
 <body>
 <header>
     <h1>TravelGo</h1>
