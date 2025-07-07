@@ -9,7 +9,7 @@ import random
 
 
 app = Flask(__name__)
-app.secret_key = 'your_secret_key_here' # IMPORTANT: Change this to a strong, random key in production!
+app.secret_key = 'vikrAm0675' # IMPORTANT: Change this to a strong, random key in production!
 
 
 # AWS Setup using IAM Role
